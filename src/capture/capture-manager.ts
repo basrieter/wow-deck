@@ -3,6 +3,7 @@ import {
   isSupported,
   type WindowInfo,
 } from "@screen-capture/node";
+import streamDeck from "@elgato/streamdeck";
 import type { GridSettings } from "../settings/global-grid-settings.js";
 import { normalizeGrid } from "../settings/global-grid-settings.js";
 import { clientBounds, isMinimized, resolveWindow } from "./window-manager.js";
@@ -105,7 +106,7 @@ export class CaptureManager {
   private warn(message: string) {
     const now = Date.now();
     if (now - (this.lastWarning.get(message) ?? 0) > 30_000) {
-      console.warn(`[WoW-Deck] ${message}`);
+      streamDeck.logger.warn(message);
       this.lastWarning.set(message, now);
     }
   }
@@ -159,6 +160,7 @@ export class CaptureManager {
         this.session = capture;
         await capture.start();
         let lastUpdate = 0;
+        let unavailableFrames = 0;
         const previous = new Map<string, { hash: string; image: string }>();
         while (this.subscribers.size && token === this.generation) {
           const started = performance.now();
@@ -177,9 +179,17 @@ export class CaptureManager {
             break;
           const client = clientBounds(current, frame.width, frame.height);
           if (!client) {
-            await this.publish("Client area unavailable");
+            unavailableFrames++;
+            this.warn(
+              `Client area unavailable: frame=${frame.width}x${frame.height} window=${current.width}x${current.height} handle=${current.handle}`,
+            );
+            if (unavailableFrames >= 3) {
+              this.latest = null;
+              await this.publish("Client area unavailable");
+            }
             continue;
           }
+          unavailableFrames = 0;
           this.status = "Mirroring";
           this.latest = { frame, client };
           const cache = new Map<string, { image: string; status: string }>();
@@ -221,8 +231,8 @@ export class CaptureManager {
             process.env.WOW_MIRROR_DEBUG === "1" &&
             Date.now() - this.lastDiagnostic > 30_000
           ) {
-            console.info(
-              `[WoW-Deck] frame=${frame.width}x${frame.height} wait=${captureWait.toFixed(1)}ms processing=${(performance.now() - started - captureWait).toFixed(1)}ms encoded=${encoded} actions=${this.subscribers.size} rss=${Math.round(process.memoryUsage().rss / 1048576)}MiB`,
+            streamDeck.logger.info(
+              `frame=${frame.width}x${frame.height} wait=${captureWait.toFixed(1)}ms processing=${(performance.now() - started - captureWait).toFixed(1)}ms encoded=${encoded} actions=${this.subscribers.size} rss=${Math.round(process.memoryUsage().rss / 1048576)}MiB`,
             );
             this.lastDiagnostic = Date.now();
           }

@@ -4,9 +4,11 @@ import path from "node:path";
 import type { GridSettings } from "../settings/global-grid-settings.js";
 import type { ClientRect } from "./image-processor.js";
 import { selectWindow } from "./window-selection.js";
+import { mapClientToFrame } from "./window-geometry.js";
 
 const user32 = koffi.load("user32.dll");
 const kernel32 = koffi.load("kernel32.dll");
+const dwmapi = koffi.load("dwmapi.dll");
 const RECT = koffi.struct("WOW_RECT", {
   left: "long",
   top: "long",
@@ -53,6 +55,9 @@ const queryImageName = kernel32.func(
 const closeHandle = kernel32.func("int CloseHandle(intptr_t handle)");
 const setDpiContext = user32.func(
   "int SetProcessDpiAwarenessContext(intptr_t value)",
+);
+const getDwmFrameBounds = dwmapi.func(
+  "long DwmGetWindowAttribute(intptr_t hwnd, uint attribute, _Out_ WOW_RECT *rect, uint size)",
 );
 
 export function enablePhysicalPixels() {
@@ -224,20 +229,20 @@ export function clientBounds(
   const width = rect.right - rect.left,
     height = rect.bottom - rect.top;
   if (width <= 0 || height <= 0) return null;
-  // WGC frame usually matches the window bounds. Frame-size delta is distributed
-  // around the physical Win32 window rectangle (invisible resize borders).
-  const windowWidth = window.rect.right - window.rect.left;
-  const windowHeight = window.rect.bottom - window.rect.top;
-  const x = Math.round(
-    point.x - window.rect.left - Math.max(0, windowWidth - frameWidth) / 2,
+  const visible = { left: 0, top: 0, right: 0, bottom: 0 };
+  let visibleBounds;
+  try {
+    // DWMWA_EXTENDED_FRAME_BOUNDS (9) omits invisible resize margins.
+    if (getDwmFrameBounds(window.handle, 9, visible, 16) === 0)
+      visibleBounds = visible;
+  } catch {
+    // Older or inaccessible windows can still use their Win32 bounds.
+  }
+  return mapClientToFrame(
+    point,
+    { width, height },
+    { width: frameWidth, height: frameHeight },
+    window.rect,
+    visibleBounds,
   );
-  const y = Math.round(
-    point.y - window.rect.top - Math.max(0, windowHeight - frameHeight) / 2,
-  );
-  return x >= 0 &&
-    y >= 0 &&
-    x + width <= frameWidth &&
-    y + height <= frameHeight
-    ? { x, y, width, height }
-    : null;
 }
