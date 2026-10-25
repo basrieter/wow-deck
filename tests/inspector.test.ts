@@ -119,6 +119,24 @@ describe("Property Inspector protocol", () => {
       }),
     });
     expect(get("status").textContent).toBe("Shared grid settings saved");
+    socket.onmessage?.({
+      data: JSON.stringify({
+        event: "sendToPropertyInspector",
+        payload: {
+          type: "state",
+          status: "Mirroring",
+          windows: [{ process: "chrome.exe", title: "Browser", handle: 42 }],
+        },
+      }),
+    });
+    const listedWindows = get("window").options.length;
+    socket.onmessage?.({
+      data: JSON.stringify({
+        event: "sendToPropertyInspector",
+        payload: { type: "state", status: "Mirroring" },
+      }),
+    });
+    expect(get("window").options).toHaveLength(listedWindows);
   });
 
   it("sets and saves the shared origin from a preview click", () => {

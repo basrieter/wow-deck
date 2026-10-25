@@ -37,6 +37,8 @@ export class CaptureManager {
   private lastDiagnostic = 0;
   private latest: { frame: RawFrame; client: ClientRect } | null = null;
   private latestImages = new Map<string, string>();
+  private wakeInterval: (() => void) | null = null;
+  private loggedInterval: number | null = null;
 
   get window() {
     return this.selected;
@@ -57,10 +59,17 @@ export class CaptureManager {
     };
   }
   setGrid(grid: GridSettings) {
+    if (this.loggedInterval !== grid.captureInterval) {
+      streamDeck.logger.info(
+        `Capture interval configured: ${grid.captureInterval} ms`,
+      );
+      this.loggedInterval = grid.captureInterval;
+    }
     this.grid = grid;
     this.latest = null;
     this.latestImages.clear();
     this.generation++;
+    this.wakeInterval?.();
     void this.session?.stop().catch(() => {});
     this.session = null;
     if (this.subscribers.size) this.ensureRunning();
@@ -103,6 +112,7 @@ export class CaptureManager {
     this.subscribers.delete(id);
     if (!this.subscribers.size) {
       this.generation++;
+      this.wakeInterval?.();
       void this.session?.stop().catch(() => {});
       this.session = null;
       this.selected = null;
@@ -129,6 +139,20 @@ export class CaptureManager {
     await Promise.allSettled(
       [...this.subscribers.values()].map((s) => s.update(image, message)),
     );
+  }
+  private waitForInterval(started: number, token: number) {
+    const remaining = this.grid.captureInterval - (performance.now() - started);
+    if (remaining <= 0 || token !== this.generation || !this.subscribers.size)
+      return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const finish = () => {
+        clearTimeout(timer);
+        if (this.wakeInterval === finish) this.wakeInterval = null;
+        resolve();
+      };
+      const timer = setTimeout(finish, remaining);
+      this.wakeInterval = finish;
+    });
   }
   private async loop() {
     while (this.subscribers.size) {
@@ -172,17 +196,15 @@ export class CaptureManager {
         });
         this.session = capture;
         await capture.start();
-        let lastUpdate = 0;
         let unavailableFrames = 0;
         const previous = new Map<string, { hash: string; image: string }>();
         while (this.subscribers.size && token === this.generation) {
           const started = performance.now();
           const frame = await capture.nextFrame();
-          const captureWait = performance.now() - started;
-          if (!frame) break;
-          if (Date.now() - lastUpdate < this.grid.captureInterval - 20)
-            continue;
-          lastUpdate = Date.now();
+          const processedAt = performance.now();
+          const captureWait = processedAt - started;
+          if (!frame || token !== this.generation || !this.subscribers.size)
+            break;
           const current = resolveWindow(this.grid);
           if (
             !current ||
@@ -200,6 +222,7 @@ export class CaptureManager {
               this.latest = null;
               await this.publish("Client area unavailable");
             }
+            await this.waitForInterval(processedAt, token);
             continue;
           }
           unavailableFrames = 0;
@@ -249,6 +272,7 @@ export class CaptureManager {
             );
             this.lastDiagnostic = Date.now();
           }
+          await this.waitForInterval(processedAt, token);
         }
       } catch (error) {
         this.warn(String(error));
@@ -276,6 +300,7 @@ export class CaptureManager {
   async shutdown() {
     this.subscribers.clear();
     this.generation++;
+    this.wakeInterval?.();
     await this.session?.stop().catch(() => {});
   }
 }

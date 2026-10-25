@@ -47,23 +47,28 @@ export class WowAction extends SingletonAction<ActionSettings> {
     for (const key of this.actions) if (key.isKey()) this.bind(key);
     this.sendInspector();
   }
-  private sendInspector(refreshWindows = false) {
+  private sendInspector(includeWindows = false) {
     const id = streamDeck.ui.action?.id;
-    const settings = id ? this.settings.get(id) : undefined;
+    if (!id) return;
+    const settings = this.settings.get(id);
     const status =
       settings?.shortcut && !parseShortcut(settings.shortcut)
         ? "Invalid shortcut"
-        : (id && this.statuses.get(id)) || capture.currentStatus;
-    const windows = listWindows(refreshWindows);
+        : this.statuses.get(id) || capture.currentStatus;
+    const windows = includeWindows ? listWindows(true) : null;
     void streamDeck.ui.sendToPropertyInspector({
       type: "state",
       status,
-      windowDiagnostic: windowDiscoveryStatus(),
-      windows: windows.map((w) => ({
-        title: w.title,
-        process: w.processName,
-        handle: w.handle,
-      })),
+      ...(windows
+        ? {
+            windowDiagnostic: windowDiscoveryStatus(),
+            windows: windows.map((w) => ({
+              title: w.title,
+              process: w.processName,
+              handle: w.handle,
+            })),
+          }
+        : {}),
     });
   }
   private bind(key: KeyAction<ActionSettings>) {

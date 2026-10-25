@@ -339,9 +339,11 @@ window.connectElgatoStreamDeckSocket = (
     }
     if (m.event === "sendToPropertyInspector" && m.payload?.type === "state") {
       receivedPluginState = true;
-      windows = m.payload.windows || [];
-      windowDiagnostic = m.payload.windowDiagnostic || "";
-      drawWindows();
+      if (Array.isArray(m.payload.windows)) {
+        windows = m.payload.windows;
+        windowDiagnostic = m.payload.windowDiagnostic || "";
+        drawWindows();
+      }
       if (!pendingActionSave && !pendingGridSave)
         setStatus(m.payload.status || "Ready");
     }
