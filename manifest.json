@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "com.wow-deck",
+  "Name": "WoW-Deck",
+  "Description": "Mirrors a configured WoW action-bar grid and sends foreground-only shortcuts.",
+  "Author": "WoW-Deck",
+  "Version": "1.0.0.6",
+  "SDKVersion": 3,
+  "Software": { "MinimumVersion": "7.1" },
+  "Nodejs": { "Version": "24" },
+  "OS": [{ "Platform": "windows", "MinimumVersion": "10" }],
+  "CodePath": "bin/plugin.js",
+  "Icon": "assets/plugin-icon",
+  "Category": "WoW-Deck",
+  "CategoryIcon": "assets/category-icon",
+  "Actions": [{
+    "Name": "WoW Action Bar Button", "UUID": "com.wow-deck.button",
+    "Icon": "assets/action-icon", "Controllers": ["Keypad"],
+    "PropertyInspectorPath": "inspector/index.html",
+    "States": [{ "Image": "assets/key" }]
+  }]
+}

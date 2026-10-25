@@ -1,0 +1,32 @@
+{
+  "name": "wow-deck",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "npm run typecheck",
+    "test": "vitest run",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "validate": "npm run build && streamdeck validate com.wow-deck.sdPlugin --no-update-check",
+    "pack": "npm run build && streamdeck pack com.wow-deck.sdPlugin --output dist --force --no-file-list --no-update-check",
+    "link": "npm run build && streamdeck link com.wow-deck.sdPlugin",
+    "restart": "streamdeck restart com.wow-deck"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^3.0.3",
+    "@screen-capture/node": "1.1.0",
+    "koffi": "3.3.4",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@elgato/cli": "^1.10.3",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

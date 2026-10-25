@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font: 13px Arial, sans-serif;
+            color: #eee;
+            background: #242426;
+            margin: 12px
+        }
+
+        h2 {
+            font-size: 15px;
+            margin: 18px 0 8px
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 4px
+        }
+
+        input,
+        select,
+        button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 6px;
+            background: #363638;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px
+        }
+
+        input[type=checkbox] {
+            width: auto
+        }
+
+        button {
+            cursor: pointer;
+            margin-top: 8px;
+            background: #444
+        }
+
+        small {
+            color: #bbb
+        }
+
+        #status {
+            padding: 8px;
+            background: #303035;
+            border-left: 3px solid #d59b50;
+            margin-top: 14px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 8px
+        }
+
+        .hint {
+            line-height: 1.4;
+            color: #aaa
+        }
+    </style>
+</head>
+
+<body>
+    <h2>WoW Action Bar Button</h2>
+    <label for="position">Action Bar Position</label><select id="position"></select>
+    <label for="shortcut">Keyboard Shortcut</label><input id="shortcut" placeholder="Ctrl+Alt+Shift+F1"><button
+        id="learnShortcut" type="button">Learn shortcut</button><small id="shortcutHint">Press Learn shortcut, then
+        press your key combination. You can also type Ctrl+Alt+Shift+F1 or Ctrl-Alt-Shift-F1. Main key: A–Z, 0–9,
+        F1–F12, -, =, arrows, Space, Enter, Tab, Esc.</small>
+    <label><input type="checkbox" id="mirror" checked> Mirror Image</label><small>Button settings save automatically when changed.</small>
+    <div id="status">Connecting…</div>
+    <h2>Shared Grid Settings</h2><small>One grid for all WoW buttons. Values are physical pixels from the window client
+        area's top left. Arrange your WoW UI to match the grid.</small>
+    <label for="window">Target Window (any application)</label><select id="window"></select><small
+        id="windowHint"></small><button id="refresh" type="button">Refresh window list</button><button id="pickWindow" type="button">Pick active window in 3 seconds</button><small>Click, then switch to Chrome or another window before the countdown ends.</small>
+    <label for="windowProcess">Executable name (optional)</label><input id="windowProcess"
+        placeholder="notepad.exe"><label for="windowTitle">Window title contains (optional)</label><input
+        id="windowTitle" placeholder="Notepad"><small>Choose a window above, or enter an executable name and/or part of
+        its title. Save the shared grid to apply.</small>
+    <div class="grid">
+        <div><label for="originX">Origin X</label><input id="originX" type="number" min="0" max="100000"></div>
+        <div><label for="originY">Origin Y</label><input id="originY" type="number" min="0" max="100000"></div>
+        <div><label for="cellWidth">Cell width</label><input id="cellWidth" type="number" min="1" max="4096"></div>
+        <div><label for="cellHeight">Cell height</label><input id="cellHeight" type="number" min="1" max="4096"></div>
+        <div><label for="rowCount">Rows</label><input id="rowCount" type="number" min="1" max="12"></div>
+        <div><label for="columnCount">Columns</label><input id="columnCount" type="number" min="1" max="12"></div>
+        <div><label for="horizontalGap">Horizontal gap</label><input id="horizontalGap" type="number" min="0"
+                max="4096"></div>
+        <div><label for="verticalGap">Vertical gap</label><input id="verticalGap" type="number" min="0" max="4096">
+        </div>
+    </div><label for="captureInterval">Capture interval</label><select id="captureInterval">
+        <option value="250">250 ms</option>
+        <option value="500">500 ms</option>
+        <option value="1000">1000 ms</option>
+        <option value="2000">2000 ms</option>
+    </select>
+    <button id="saveGrid" type="button">Save shared grid</button>
+    <p class="hint">Default reference: 1-1 to 1-5, 2-1 to 2-5, 3-1 to 3-5. Calibration is shared. A smaller grid leaves
+        invalid assignments marked invalid.</p>
+    <script src="index.js"></script>
+</body>
+
+</html>
