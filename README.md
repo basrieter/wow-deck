@@ -1,5 +1,50 @@
 # WoW-Deck
 
+**Your World of Warcraft action bars, right on your Stream Deck.**
+
+WoW-Deck brings your in-game action bar buttons to your Elgato Stream Deck. Instead of assigning static icons to your keys, it captures the actual buttons displayed in World of Warcraft and keeps their Stream Deck images updated as the game changes. Swap a spell, change an action bar slot, or watch an ability go on cooldown, and your Stream Deck reflects what is visible in the game.
+
+It works with **any** version of World of Warcraft and can also capture buttons from other games or Windows applications. No World of Warcraft addon, game-file changes, or manual icon management required.
+
+## How it works
+
+WoW-Deck takes snapshots of a configurable area of your game window containing your action bar buttons. You define a grid matching the layout of those buttons, then link each Stream Deck key to one position in that grid. The plugin crops that button's image and displays it on your Stream Deck, updating it periodically as the on-screen image changes.
+
+![alt text](assets/wow-bar.png)
+
+For example, if your action bar uses three rows of five buttons, you can assign the top-left spell to position `1-1` and the button in the second row, third column to `2-3`. You can arrange your Stream Deck keys however you like. The Stream Deck layout does not have to match the order of your in-game action bar.
+
+![alt text](assets/stream-deck-bar.png)
+
+You can also assign a keyboard shortcut to each Stream Deck key, allowing it to trigger the same in-game action while WoW is the active window. The live image and the shortcut are configured separately.
+
+**Good to know:** WoW-Deck mirrors what is visible on screen rather than reading WoW's spells or action bars directly. Keep the relevant action bar visible and use windowed or borderless window mode. Images are refreshed at a configurable interval when capture frames are available, so updates are near-real-time rather than guaranteed instantaneous.
+
+## Quick start for WoW players
+
+### First time setup
+1. **Add a button.** In the Stream Deck app, drag **WoW Action Bar Button** onto any empty Stream Deck key. Select it to open its settings.
+2. **Choose your game window.** On first setup, find **Window settings** (under the shared grid configuration) and choose your running World of Warcraft window. If it is not listed, refresh the window list. You only need to configure the shared capture grid once, even if you add many buttons.
+
+
+![alt text](assets/grid-settings.png)
+
+3. **Set up the capture zone.** Click **Show window preview** and select the top-left corner of the action bar buttons you want to mirror. Configure the number of rows and columns, button width and height, and spacing between buttons so the grid matches your on-screen action bar. Save the shared grid settings. You can fine-tune the starting point with the arrow keys.
+4. **Choose a button position.** For the Stream Deck key you added, select an **Action Bar Position** such as `1-1`, `1-2`, or `2-3`. Its display will show the corresponding in-game button.
+5. **Optional: assign its shortcut.** Enter or learn the **Keyboard Shortcut** bound to that action in WoW, such as `1` or `Shift+2`, if you want pressing the Stream Deck key to activate it.
+
+**_All keys use the same shared capture configuration._**
+
+### Fill your Stream Deck
+1. Add more **WoW Action Bar Button** actions.
+2. Give each one its own grid position and, optionally, shortcut. 
+
+After that, manage your spells and abilities in WoW as usual. The Stream Deck images follow the visible action bar, so you don't have to update icons manually.
+
+---
+
+## Technical documentation
+
 A Windows 11 Stream Deck plugin that mirrors a rectangular grid of pixels from a selected window onto Stream Deck keys. Select any application, such as Notepad, for testing; select WoW Forever for use with the game. Each **WoW Action Bar Button** can send its own shortcut while the selected window is foreground. The grid is arbitrary: arrange the game UI to match it. There is no game addon, OCR, spell detection, or service.
 
 The display name is **WoW-Deck**. The plugin UUID is `com.wow-deck` and its action UUID is `com.wow-deck.button`; Elgato's validator rejects the bare `wow-deck` identifier because plugin UUIDs require reverse-DNS form.
