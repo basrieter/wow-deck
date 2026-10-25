@@ -84,7 +84,9 @@ export class WowAction extends SingletonAction<ActionSettings> {
             mirror: settings.mirror,
             update: async (image, status) => {
                 if (this.lastImage.get(key.id) !== image) {
+                    const updateStarted = performance.now();
                     await key.setImage(image);
+                    capture.recordImageUpdate(performance.now() - updateStarted);
                     this.lastImage.set(key.id, image);
                 }
                 if (this.statuses.get(key.id) !== status) {

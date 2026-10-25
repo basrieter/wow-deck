@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { CaptureManager } from "../src/capture/capture-manager.js";
 import { normalizeGrid } from "../src/settings/global-grid-settings.js";
 
+const captureTrace = vi.hoisted(() => ({ crops: [] as number[][] }));
+
 vi.mock("@elgato/streamdeck", () => ({
     default: { logger: { info() {}, warn() {} } }
 }));
@@ -9,7 +11,7 @@ vi.mock("@elgato/streamdeck", () => ({
 vi.mock("../src/capture/window-manager.js", () => ({
     resolveWindow: () => ({ handle: 1 }),
     isMinimized: () => false,
-    clientBounds: () => ({ x: 0, y: 0, width: 48, height: 48 })
+    clientBounds: () => ({ x: 0, y: 0, width: 96, height: 48 })
 }));
 
 vi.mock("@screen-capture/node", () => {
@@ -18,6 +20,7 @@ vi.mock("@screen-capture/node", () => {
         width: number;
         height: number;
         colorFormat: string;
+        crop(startX: number, startY: number, endX: number, endY: number): Frame;
     };
     class FakeCapture {
         private queue: Frame[] = [];
@@ -35,12 +38,40 @@ vi.mock("@screen-capture/node", () => {
 
         async start() {
             const makeFrame = (red: number): Frame => {
-                const buffer = Buffer.alloc(48 * 48 * 4);
+                const buffer = Buffer.alloc(96 * 48 * 4);
                 for (let i = 0; i < buffer.length; i += 4) {
                     buffer[i + 2] = red;
                     buffer[i + 3] = 255;
                 }
-                return { buffer, width: 48, height: 48, colorFormat: "bgra8" };
+                return {
+                    buffer,
+                    width: 96,
+                    height: 48,
+                    colorFormat: "bgra8",
+                    crop(startX, startY, endX, endY) {
+                        captureTrace.crops.push([startX, startY, endX, endY]);
+                        const width = endX - startX;
+                        const height = endY - startY;
+                        const pixels = Buffer.alloc(width * height * 4);
+                        for (let y = 0; y < height; y++) {
+                            buffer.copy(
+                                pixels,
+                                y * width * 4,
+                                ((startY + y) * 96 + startX) * 4,
+                                ((startY + y) * 96 + endX) * 4
+                            );
+                        }
+                        return {
+                            buffer: pixels,
+                            width,
+                            height,
+                            colorFormat: "bgra8",
+                            crop: () => {
+                                throw new Error("Unexpected nested crop");
+                            }
+                        };
+                    }
+                };
             };
             this.push(makeFrame(50));
             setTimeout(() => this.push(makeFrame(200)), 40);
@@ -64,6 +95,7 @@ vi.mock("@screen-capture/node", () => {
 
 describe("capture interval", () => {
     it("shows a changed frame even if the window becomes static before the deadline", async () => {
+        captureTrace.crops.length = 0;
         const manager = new CaptureManager();
         const images: string[] = [];
         const grid = {
@@ -90,6 +122,10 @@ describe("capture interval", () => {
                 });
             });
             expect(images[0]).not.toBe(images[1]);
+            expect(captureTrace.crops).toEqual([
+                [0, 0, 48, 48],
+                [0, 0, 48, 48]
+            ]);
         }
         finally {
             await manager.shutdown();

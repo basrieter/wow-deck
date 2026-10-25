@@ -10,8 +10,6 @@
     "lint:fix": "eslint src tests --fix",
     "lint": "npm run typecheck && npm run lint:eslint",
     "test": "vitest run",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
     "validate": "npm run build && streamdeck validate com.wow-deck.sdPlugin --no-update-check",
     "pack": "npm run build && streamdeck pack com.wow-deck.sdPlugin --output dist --force --no-file-list --no-update-check",
     "link": "npm run build && streamdeck link com.wow-deck.sdPlugin",
@@ -30,7 +28,6 @@
     "angular-eslint": "^22.6.0",
     "esbuild": "^0.25.0",
     "eslint": "^10.13.0",
-    "prettier": "^3.9.10",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.72.0",
     "vitest": "^3.2.0"

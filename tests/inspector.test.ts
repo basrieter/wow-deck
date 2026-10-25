@@ -107,9 +107,12 @@ describe("Property Inspector protocol", () => {
         });
         expect(get("status").textContent).toBe("Button settings saved");
         get("windowProcess").value = "notepad.exe";
+        get("hashChangeDetection").checked = false;
+        get("debugLogging").checked = true;
         get("saveGrid").onclick?.();
         const gridSave = socket.messages.find(m => m.event === "setGlobalSettings");
         expect(gridSave?.context).toBe("pi-uuid");
+        expect(gridSave?.payload).toMatchObject({ hashChangeDetection: false, debugLogging: true });
         socket.onmessage?.({
             data: JSON.stringify({
                 event: "didReceiveGlobalSettings",

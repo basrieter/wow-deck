@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_GRID, cellRegion, normalizeGrid, positions } from "../src/settings/global-grid-settings.js";
 import { parseShortcut } from "../src/input/shortcut.js";
-import { regionHash } from "../src/capture/image-processor.js";
+import { boundingRegion, regionHash, regionWithin } from "../src/capture/image-processor.js";
 import { renderCrop } from "../src/capture/image-processor.js";
 import sharp from "sharp";
 import { selectWindow } from "../src/capture/window-selection.js";
@@ -33,6 +33,12 @@ describe("shared grid", () => {
     it("rejects malformed persisted settings", () => {
         expect(normalizeGrid({ rowCount: -1, cellWidth: 0, captureInterval: 123 }).rowCount).toBe(3);
         expect(normalizeGrid({ rowCount: -1, cellWidth: 0, captureInterval: 123 }).captureInterval).toBe(1000);
+        expect(normalizeGrid({ hashChangeDetection: "off", debugLogging: 1 }).hashChangeDetection).toBe(true);
+        expect(normalizeGrid({ hashChangeDetection: "off", debugLogging: 1 }).debugLogging).toBe(false);
+        expect(normalizeGrid({ hashChangeDetection: false, debugLogging: true })).toMatchObject({
+            hashChangeDetection: false,
+            debugLogging: true
+        });
     });
 });
 describe("shortcuts", () => {
@@ -79,6 +85,20 @@ describe("arbitrary window selection", () => {
     });
 });
 describe("image comparison", () => {
+    it("builds a small area around only the mapped cells", () => {
+        const area = boundingRegion([
+            { left: 300, top: 200, width: 48, height: 48 },
+            { left: 408, top: 200, width: 48, height: 48 }
+        ]);
+        expect(area).toEqual({ left: 300, top: 200, width: 156, height: 48 });
+        expect(regionWithin({ left: 408, top: 200, width: 48, height: 48 }, area!)).toEqual({
+            left: 108,
+            top: 0,
+            width: 48,
+            height: 48
+        });
+        expect(boundingRegion([])).toBeNull();
+    });
     it("hashes only the selected crop", () => {
         const frame = {
             buffer: Buffer.alloc(4 * 4 * 4),

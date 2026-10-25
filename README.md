@@ -13,8 +13,7 @@ The display name is **WoW-Deck**. The plugin UUID is `com.wow-deck` and its acti
 
 ```powershell
 npm install
-npm run format:check
-npm run typecheck
+npm run lint
 npm test
 npm run build
 npm run validate
@@ -51,13 +50,15 @@ The selected window is identified by executable name and/or title and re-discove
 
 On Windows, the plugin log is at `%APPDATA%\Elgato\StreamDeck\Plugins\com.wow-deck.sdPlugin\logs\com.wow-deck.0.log`. The Stream Deck application log is at `%APPDATA%\Elgato\StreamDeck\logs\StreamDeck.log` on current installations; older versions use `StreamDeck0.log`. If the plugin crashes before its logger starts, the plugin log may not exist, but the application log will show `com.wow-deck` terminating. Open these paths in File Explorer by pasting them into its address bar. Reinstalling removes plugin logs, so copy them first if reporting an issue.
 
-The capture API returns a whole window frame. The plugin processes at most one frame per configured interval (250, 500, 1000, or 2000 ms), crops each unique selected cell once, and skips PNG encoding when the raw crop is unchanged. It waits between reads while the native capture queue retains the latest changed frame, so a single change is still shown at the next read. The interval is a rate limit, not a promise to produce a fresh frame: Windows may deliver no frame when the window is static, and unchanged cell images are not resent. Thus 250 ms and 2000 ms can look identical during static or infrequently changing content. The plugin logs the configured interval when it changes. It sends a 144×144 PNG to Stream Deck only when the result changes. Non-square cells are scaled to fit on a dark square without stretching. Native capture frames and sessions are released on action removal, window loss, and shutdown.
+The capture API supplies one whole selected-window frame; it cannot limit the native window capture to the action-bar region. Before reading frame pixels into Node.js, WoW-Deck now crops the native frame once to the bounding rectangle of the active mapped cells. It then hashes and renders cells from that smaller buffer. A preview explicitly reads the whole frame on demand. The plugin processes at most one frame per configured interval (250, 500, 1000, or 2000 ms). The interval is a rate limit, not a promise to produce a fresh frame: Windows may deliver no frame when the window is static. Thus 250 ms and 2000 ms can look identical during static or infrequently changing content. Non-square cells are scaled to fit on a dark square without stretching.
+
+**Skip unchanged cells using hashes** is enabled by default in Shared Grid Settings. When enabled, unchanged cell pixels reuse their prior PNG without encoding again. When disabled, each mapped cell is encoded on every processed frame, although identical encoded button images are still not resent to Stream Deck. Disabling hashing can help diagnose stale image problems but will usually use more CPU. Both this and **Detailed capture logging** are shared settings; save the shared grid to apply them.
 
 ## Profiling and development
 
-Set `WOW_MIRROR_DEBUG=1` in the Stream Deck process environment before starting Stream Deck to log one line per 30 seconds with frame size, capture wait, processing time, encoded cells, active actions, and RSS memory. Compare Stream Deck's plugin process CPU and memory in Task Manager while WoW is idle and active. At the default interval, count changed image updates and check that only one capture session exists for all mapped keys. These timings include waiting for a frame and therefore are not pure GPU capture cost. No CPU or game FPS target has been measured here.
+To enable diagnostics, check **Detailed capture logging** under Shared Grid Settings and click **Save shared grid**. Open `%APPDATA%\Elgato\StreamDeck\Plugins\com.wow-deck.sdPlugin\logs\com.wow-deck.0.log`; search for `[capture-debug]`. The plugin writes a session-start line and a summary every 10 seconds, including the configured interval, actual frame rate and frame gaps, full-frame and cropped-area dimensions, cell counts, hash skips, encoded cells, Stream Deck image updates, average capture wait/crop/hash/encode/delivery times, and process RSS. A zero-frame interval means the capture source supplied no new frame. `WOW_MIRROR_DEBUG=1` in the Stream Deck process environment is an alternative to the UI switch. These measurements identify where time is spent; capture wait can include time waiting for the window to change. Compare the plugin process CPU and memory in Task Manager while the game is idle and active. No CPU or game FPS target has been measured here.
 
-The TypeScript is formatted with Prettier (`npm run format`). `npm run lint` runs the strict TypeScript check. Tests cover row-column placement, bounds, dropdown options, settings normalization, shortcut parsing, crop comparison, and BGRA color conversion.
+`npm run lint` runs TypeScript checking and ESLint. Tests cover row-column placement, bounds, dropdown options, settings normalization, shortcut parsing, crop comparison, and BGRA color conversion.
 
 `npm audit --omit=dev` currently reports a high-severity memory-exhaustion advisory in `zod`, pulled in by the official SDK's `@elgato/utils`. The SDK requires Zod 3, and npm's suggested downgrade would remove the current SDK APIs used here. This plugin does not expose an HTTP endpoint; review SDK updates before distributing broadly.
 

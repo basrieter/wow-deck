@@ -140,6 +140,10 @@
         <option value="1000">1000 ms</option>
         <option value="2000">2000 ms</option>
     </select>
+    <label><input id="hashChangeDetection" type="checkbox" checked> Skip unchanged cells using hashes</label>
+    <small>Turn off to encode every mapped cell on each processed frame. Stream Deck still avoids sending an identical button image.</small>
+    <label><input id="debugLogging" type="checkbox"> Detailed capture logging</label>
+    <small>Save the shared grid, then read com.wow-deck.0.log in the plugin's logs folder. Diagnostic summaries appear every 10 seconds.</small>
     <button id="saveGrid" type="button">Save shared grid</button>
     <p class="hint">Default reference: 1-1 to 1-5, 2-1 to 2-5, 3-1 to 3-5. Calibration is shared. A smaller grid leaves
         invalid assignments marked invalid.</p>

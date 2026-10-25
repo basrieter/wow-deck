@@ -11,7 +11,9 @@ const defaults = {
     columnCount: 5,
     horizontalGap: 0,
     verticalGap: 0,
-    captureInterval: 1000
+    captureInterval: 1000,
+    hashChangeDetection: true,
+    debugLogging: false
 };
 let socket,
     uuid,
@@ -245,6 +247,8 @@ function drawWindows() {
 }
 function drawGrid() {
     numeric.forEach(id => ($(id).value = grid[id]));
+    $("hashChangeDetection").checked = grid.hashChangeDetection !== false;
+    $("debugLogging").checked = grid.debugLogging === true;
     $("windowProcess").value = grid.windowProcess;
     $("windowTitle").value = grid.windowTitle;
     selectedHandle = grid.windowHandle || 0;
@@ -620,6 +624,8 @@ $("saveGrid").onclick = () => {
     next.windowProcess = $("windowProcess").value.trim();
     next.windowTitle = $("windowTitle").value.trim();
     next.windowHandle = selectedHandle;
+    next.hashChangeDetection = $("hashChangeDetection").checked;
+    next.debugLogging = $("debugLogging").checked;
     if (!next.windowProcess && !next.windowTitle) {
         setStatus("Choose a window or enter an executable/title");
         return;
