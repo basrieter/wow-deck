@@ -81,12 +81,9 @@ export class WowAction extends SingletonAction<ActionSettings> {
         }
         capture.subscribe(key.id, {
             position: settings.position,
-            mirror: settings.mirror,
             update: async (image, status) => {
                 if (this.lastImage.get(key.id) !== image) {
-                    const updateStarted = performance.now();
                     await key.setImage(image);
-                    capture.recordImageUpdate(performance.now() - updateStarted);
                     this.lastImage.set(key.id, image);
                 }
                 if (this.statuses.get(key.id) !== status) {
@@ -137,7 +134,6 @@ export class WowAction extends SingletonAction<ActionSettings> {
     }
 
     override onPropertyInspectorDidAppear() {
-        streamDeck.logger.info("Property Inspector opened");
         this.sendInspector(true);
     }
 
@@ -147,7 +143,6 @@ export class WowAction extends SingletonAction<ActionSettings> {
         }
         if (ev.payload.type === "refresh") {
             this.sendInspector(true);
-            streamDeck.logger.info(windowDiscoveryStatus());
         }
         if (ev.payload.type === "preview") {
             void (async () => {
@@ -173,7 +168,6 @@ export class WowAction extends SingletonAction<ActionSettings> {
             })();
         }
         if (ev.payload.type === "pickForeground") {
-            streamDeck.logger.info("Foreground window selection requested");
             if (this.pickTimer) {
                 clearTimeout(this.pickTimer);
             }
@@ -198,7 +192,6 @@ export class WowAction extends SingletonAction<ActionSettings> {
                     try {
                         await streamDeck.settings.setGlobalSettings(next);
                         this.setGrid(next);
-                        streamDeck.logger.info(`Selected window: ${window.processName} (handle ${window.handle})`);
                         await streamDeck.ui.sendToPropertyInspector({
                             type: "pickResult",
                             message: `Selected ${window.processName}. Shared grid saved.`

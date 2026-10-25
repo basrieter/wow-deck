@@ -11,8 +11,6 @@ export interface GridSettings {
     horizontalGap: number;
     verticalGap: number;
     captureInterval: 250 | 500 | 1000 | 2000;
-    hashChangeDetection: boolean;
-    debugLogging: boolean;
 }
 
 export const DEFAULT_GRID: GridSettings = {
@@ -27,9 +25,7 @@ export const DEFAULT_GRID: GridSettings = {
     columnCount: 5,
     horizontalGap: 0,
     verticalGap: 0,
-    captureInterval: 1000,
-    hashChangeDetection: true,
-    debugLogging: false
+    captureInterval: 1000
 };
 
 const bounded = (v: unknown, min: number, max: number, fallback: number) =>
@@ -50,9 +46,7 @@ export function normalizeGrid(value: unknown): GridSettings {
         columnCount: bounded(v.columnCount, 1, 12, 5),
         horizontalGap: bounded(v.horizontalGap, 0, 4096, 0),
         verticalGap: bounded(v.verticalGap, 0, 4096, 0),
-        captureInterval: interval as GridSettings["captureInterval"],
-        hashChangeDetection: typeof v.hashChangeDetection === "boolean" ? v.hashChangeDetection : true,
-        debugLogging: typeof v.debugLogging === "boolean" ? v.debugLogging : false
+        captureInterval: interval as GridSettings["captureInterval"]
     };
 }
 

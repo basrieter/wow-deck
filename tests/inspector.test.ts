@@ -87,7 +87,7 @@ describe("Property Inspector protocol", () => {
             "{}",
             JSON.stringify({
                 action: "com.wow-deck.button",
-                payload: { settings: {} }
+                payload: { settings: { mirror: false } }
             })
         );
         const socket = FakeSocket.last;
@@ -98,6 +98,7 @@ describe("Property Inspector protocol", () => {
         const actionSave = socket.messages.find(m => m.event === "setSettings");
         expect(actionSave?.context).toBe("pi-uuid");
         expect(actionSave?.payload).toMatchObject({ position: "2-3" });
+        expect(actionSave?.payload).not.toHaveProperty("mirror");
         expect(get("status").textContent).toBe("Saving button settings…");
         socket.onmessage?.({
             data: JSON.stringify({
@@ -106,13 +107,18 @@ describe("Property Inspector protocol", () => {
             })
         });
         expect(get("status").textContent).toBe("Button settings saved");
+        socket.onmessage?.({
+            data: JSON.stringify({
+                event: "didReceiveGlobalSettings",
+                payload: { settings: { hashChangeDetection: false, debugLogging: true } }
+            })
+        });
         get("windowProcess").value = "notepad.exe";
-        get("hashChangeDetection").checked = false;
-        get("debugLogging").checked = true;
         get("saveGrid").onclick?.();
         const gridSave = socket.messages.find(m => m.event === "setGlobalSettings");
         expect(gridSave?.context).toBe("pi-uuid");
-        expect(gridSave?.payload).toMatchObject({ hashChangeDetection: false, debugLogging: true });
+        expect(gridSave?.payload).not.toHaveProperty("hashChangeDetection");
+        expect(gridSave?.payload).not.toHaveProperty("debugLogging");
         socket.onmessage?.({
             data: JSON.stringify({
                 event: "didReceiveGlobalSettings",

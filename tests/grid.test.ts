@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_GRID, cellRegion, normalizeGrid, positions } from "../src/settings/global-grid-settings.js";
+import { normalizeAction } from "../src/settings/action-settings.js";
 import { parseShortcut } from "../src/input/shortcut.js";
 import { boundingRegion, regionHash, regionWithin } from "../src/capture/image-processor.js";
 import { renderCrop } from "../src/capture/image-processor.js";
@@ -33,11 +34,14 @@ describe("shared grid", () => {
     it("rejects malformed persisted settings", () => {
         expect(normalizeGrid({ rowCount: -1, cellWidth: 0, captureInterval: 123 }).rowCount).toBe(3);
         expect(normalizeGrid({ rowCount: -1, cellWidth: 0, captureInterval: 123 }).captureInterval).toBe(1000);
-        expect(normalizeGrid({ hashChangeDetection: "off", debugLogging: 1 }).hashChangeDetection).toBe(true);
-        expect(normalizeGrid({ hashChangeDetection: "off", debugLogging: 1 }).debugLogging).toBe(false);
-        expect(normalizeGrid({ hashChangeDetection: false, debugLogging: true })).toMatchObject({
-            hashChangeDetection: false,
-            debugLogging: true
+        expect(normalizeGrid({ hashChangeDetection: false })).not.toHaveProperty("hashChangeDetection");
+    });
+});
+describe("button settings", () => {
+    it("ignores a saved mirror switch from older versions", () => {
+        expect(normalizeAction({ position: "2-3", shortcut: "F1", mirror: false })).toEqual({
+            position: "2-3",
+            shortcut: "F1"
         });
     });
 });

@@ -11,15 +11,13 @@ const defaults = {
     columnCount: 5,
     horizontalGap: 0,
     verticalGap: 0,
-    captureInterval: 1000,
-    hashChangeDetection: true,
-    debugLogging: false
+    captureInterval: 1000
 };
 let socket,
     uuid,
     action,
     grid = { ...defaults },
-    settings = { position: "", shortcut: "", mirror: true },
+    settings = { position: "", shortcut: "" },
     windows = [];
 let learning = false;
 let selectedHandle = 0;
@@ -247,8 +245,6 @@ function drawWindows() {
 }
 function drawGrid() {
     numeric.forEach(id => ($(id).value = grid[id]));
-    $("hashChangeDetection").checked = grid.hashChangeDetection !== false;
-    $("debugLogging").checked = grid.debugLogging === true;
     $("windowProcess").value = grid.windowProcess;
     $("windowTitle").value = grid.windowTitle;
     selectedHandle = grid.windowHandle || 0;
@@ -262,7 +258,6 @@ function drawGrid() {
 function drawAction() {
     drawPositions();
     $("shortcut").value = settings.shortcut;
-    $("mirror").checked = settings.mirror !== false;
     $("shortcutHint").style.color
         = settings.shortcut && !validShortcut(settings.shortcut) ? "#ff7979" : "#bbb";
 }
@@ -348,6 +343,7 @@ document.addEventListener(
 );
 function saveAction() {
     const expected = { ...settings };
+    delete expected.mirror;
     if (send("setSettings", expected)) {
         confirmSave("button", expected);
     }
@@ -366,6 +362,7 @@ window.connectElgatoStreamDeckSocket = (
     let data = JSON.parse(actionInfo);
     action = data.action;
     settings = { ...settings, ...data.payload?.settings };
+    delete settings.mirror;
     drawAction();
     socket = new WebSocket(`ws://127.0.0.1:${port}`);
     socket.onopen = () => {
@@ -386,12 +383,15 @@ window.connectElgatoStreamDeckSocket = (
         if (m.event === "didReceiveGlobalSettings") {
             if (!pendingGridSave || receivedSave("grid", m.payload.settings)) {
                 grid = { ...defaults, ...m.payload.settings };
+                delete grid.debugLogging;
+                delete grid.hashChangeDetection;
                 drawGrid();
             }
         }
         if (m.event === "didReceiveSettings") {
             if (!pendingActionSave || receivedSave("button", m.payload.settings)) {
                 settings = { ...settings, ...m.payload.settings };
+                delete settings.mirror;
                 drawAction();
             }
         }
@@ -458,10 +458,6 @@ $("shortcut").onchange = () => {
         return;
     }
     settings.shortcut = text;
-    saveAction();
-};
-$("mirror").onchange = () => {
-    settings.mirror = $("mirror").checked;
     saveAction();
 };
 $("refresh").onclick = () => send("sendToPlugin", { type: "refresh" });
@@ -612,6 +608,8 @@ $("originX").oninput = drawPreviewOverlay;
 $("originY").oninput = drawPreviewOverlay;
 $("saveGrid").onclick = () => {
     const next = { ...grid };
+    delete next.debugLogging;
+    delete next.hashChangeDetection;
     for (const id of numeric) {
         const input = $(id),
             value = Number(input.value);
@@ -624,8 +622,6 @@ $("saveGrid").onclick = () => {
     next.windowProcess = $("windowProcess").value.trim();
     next.windowTitle = $("windowTitle").value.trim();
     next.windowHandle = selectedHandle;
-    next.hashChangeDetection = $("hashChangeDetection").checked;
-    next.debugLogging = $("debugLogging").checked;
     if (!next.windowProcess && !next.windowTitle) {
         setStatus("Choose a window or enter an executable/title");
         return;

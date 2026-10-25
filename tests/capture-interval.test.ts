@@ -109,7 +109,6 @@ describe("capture interval", () => {
                 const timeout = setTimeout(() => reject(new Error("Second frame was not shown")), 1200);
                 manager.subscribe("button", {
                     position: "1-1",
-                    mirror: true,
                     update: async (image) => {
                         if (image.startsWith("data:image/png")) {
                             images.push(image);

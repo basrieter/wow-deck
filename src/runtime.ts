@@ -18,5 +18,4 @@ process.on("SIGTERM", () => {
 });
 process.on("exit", () => keyboard.releaseAll());
 await streamDeck.connect();
-streamDeck.logger.info("WoW-Deck plugin connected");
 action.setGrid(normalizeGrid(await streamDeck.settings.getGlobalSettings()));
