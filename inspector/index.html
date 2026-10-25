@@ -65,6 +65,42 @@
             line-height: 1.4;
             color: #aaa
         }
+
+        #previewWrap {
+            position: relative;
+            margin-top: 8px;
+            outline: none
+        }
+
+        #previewWrap:focus-visible {
+            outline: 2px solid #ffbf69;
+            outline-offset: 2px
+        }
+
+        #previewImage {
+            display: block;
+            width: 100%;
+            height: auto;
+            cursor: crosshair
+        }
+
+        #previewClient {
+            position: absolute;
+            border: 1px solid #70d79a;
+            box-sizing: border-box;
+            pointer-events: none
+        }
+
+        #previewMarker {
+            position: absolute;
+            width: 11px;
+            height: 11px;
+            border: 2px solid #ffbf69;
+            border-radius: 50%;
+            box-sizing: border-box;
+            transform: translate(-50%, -50%);
+            pointer-events: none
+        }
     </style>
 </head>
 
@@ -85,6 +121,8 @@
         placeholder="notepad.exe"><label for="windowTitle">Window title contains (optional)</label><input
         id="windowTitle" placeholder="Notepad"><small>Choose a window above, or enter an executable name and/or part of
         its title. Save the shared grid to apply.</small>
+    <button id="showPreview" type="button">Show window preview</button><small id="previewHint">Save the target window, then show its latest captured frame. Click the top-left corner of the grid in the preview to set and save Origin X/Y. Use the arrow keys to move it one physical pixel at a time.</small>
+    <div id="previewWrap" tabindex="0" hidden><img id="previewImage" alt="Captured target window"><div id="previewClient"></div><div id="previewMarker"></div></div>
     <div class="grid">
         <div><label for="originX">Origin X</label><input id="originX" type="number" min="0" max="100000"></div>
         <div><label for="originY">Origin Y</label><input id="originY" type="number" min="0" max="100000"></div>

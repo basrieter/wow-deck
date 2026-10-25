@@ -138,6 +138,28 @@ export class WowAction extends SingletonAction<ActionSettings> {
       this.sendInspector(true);
       streamDeck.logger.info(windowDiscoveryStatus());
     }
+    if (ev.payload.type === "preview") {
+      void (async () => {
+        try {
+          const preview = await capture.preview();
+          await streamDeck.ui.sendToPropertyInspector(
+            preview
+              ? { type: "preview", ...preview }
+              : {
+                  type: "previewError",
+                  message:
+                    "No captured frame yet. Save the target window, wait a moment, and try again.",
+                },
+          );
+        } catch (error) {
+          streamDeck.logger.warn("Could not make window preview", error);
+          await streamDeck.ui.sendToPropertyInspector({
+            type: "previewError",
+            message: "Could not make a window preview. Check the plugin log.",
+          });
+        }
+      })();
+    }
     if (ev.payload.type === "pickForeground") {
       streamDeck.logger.info("Foreground window selection requested");
       if (this.pickTimer) clearTimeout(this.pickTimer);

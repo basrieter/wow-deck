@@ -86,6 +86,29 @@ export async function renderCrop(
   return `data:image/png;base64,${png.toString("base64")}`;
 }
 
+export async function renderPreview(frame: RawFrame): Promise<string> {
+  const { data, info } = await sharp(frame.buffer, {
+    raw: { width: frame.width, height: frame.height, channels: 4 },
+  })
+    .removeAlpha()
+    .resize(640, 400, { fit: "inside", withoutEnlargement: true })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (frame.colorFormat === "bgra8") {
+    for (let i = 0; i < data.length; i += 3) {
+      const blue = data[i];
+      data[i] = data[i + 2];
+      data[i + 2] = blue;
+    }
+  }
+  const jpeg = await sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 3 },
+  })
+    .jpeg({ quality: 72 })
+    .toBuffer();
+  return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+}
+
 export function fallbackSvg(message: string) {
   const safe = message.replace(/[<>&"']/g, "");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="#171923"/><text x="72" y="69" fill="#f0b35d" font-family="Arial" font-size="16" text-anchor="middle">WoW</text><text x="72" y="93" fill="white" font-family="Arial" font-size="12" text-anchor="middle">${safe}</text></svg>`;

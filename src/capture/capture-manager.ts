@@ -11,6 +11,7 @@ import {
   fallbackSvg,
   regionHash,
   renderCrop,
+  renderPreview,
   sourceRegion,
   type RawFrame,
   type ClientRect,
@@ -42,6 +43,18 @@ export class CaptureManager {
   }
   get currentStatus() {
     return this.status;
+  }
+  async preview() {
+    const latest = this.latest;
+    const window = this.selected;
+    if (!latest || !window) return null;
+    return {
+      dataUrl: await renderPreview(latest.frame),
+      frameWidth: latest.frame.width,
+      frameHeight: latest.frame.height,
+      client: { ...latest.client },
+      windowHandle: window.handle,
+    };
   }
   setGrid(grid: GridSettings) {
     this.grid = grid;
