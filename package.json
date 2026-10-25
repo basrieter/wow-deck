@@ -6,7 +6,9 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
-    "lint": "npm run typecheck",
+    "lint:eslint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "lint": "npm run typecheck && npm run lint:eslint",
     "test": "vitest run",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
@@ -23,10 +25,14 @@
   },
   "devDependencies": {
     "@elgato/cli": "^1.10.3",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^24.0.0",
+    "angular-eslint": "^22.6.0",
     "esbuild": "^0.25.0",
+    "eslint": "^10.13.0",
     "prettier": "^3.9.10",
     "typescript": "^5.9.0",
+    "typescript-eslint": "^8.72.0",
     "vitest": "^3.2.0"
   }
 }
