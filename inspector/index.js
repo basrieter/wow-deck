@@ -17,7 +17,7 @@ let socket,
     uuid,
     action,
     grid = { ...defaults },
-    settings = { position: "", shortcut: "" },
+    settings = { position: "", shortcut: "", live: true },
     windows = [];
 let learning = false;
 let selectedHandle = 0;
@@ -257,6 +257,7 @@ function drawGrid() {
 }
 function drawAction() {
     drawPositions();
+    $("live").checked = settings.live !== false;
     $("shortcut").value = settings.shortcut;
     $("shortcutHint").style.color
         = settings.shortcut && !validShortcut(settings.shortcut) ? "#ff7979" : "#bbb";
@@ -363,6 +364,9 @@ window.connectElgatoStreamDeckSocket = (
     action = data.action;
     settings = { ...settings, ...data.payload?.settings };
     delete settings.mirror;
+    if (typeof settings.live !== "boolean") {
+        settings.live = true;
+    }
     drawAction();
     socket = new WebSocket(`ws://127.0.0.1:${port}`);
     socket.onopen = () => {
@@ -392,6 +396,9 @@ window.connectElgatoStreamDeckSocket = (
             if (!pendingActionSave || receivedSave("button", m.payload.settings)) {
                 settings = { ...settings, ...m.payload.settings };
                 delete settings.mirror;
+                if (typeof settings.live !== "boolean") {
+                    settings.live = true;
+                }
                 drawAction();
             }
         }
@@ -447,6 +454,10 @@ window.connectElgatoStreamDeckSocket = (
 $("learnShortcut").onclick = () => setLearning(!learning);
 $("position").onchange = () => {
     settings.position = $("position").value;
+    saveAction();
+};
+$("live").onchange = () => {
+    settings.live = $("live").checked;
     saveAction();
 };
 $("shortcut").onchange = () => {

@@ -109,6 +109,7 @@ describe("capture interval", () => {
                 const timeout = setTimeout(() => reject(new Error("Second frame was not shown")), 1200);
                 manager.subscribe("button", {
                     position: "1-1",
+                    live: true,
                     update: async (image) => {
                         if (image.startsWith("data:image/png")) {
                             images.push(image);
@@ -125,6 +126,47 @@ describe("capture interval", () => {
                 [0, 0, 48, 48],
                 [0, 0, 48, 48]
             ]);
+        }
+        finally {
+            await manager.shutdown();
+        }
+    });
+
+    it("captures non-live buttons only when they load or are refreshed", async () => {
+        captureTrace.crops.length = 0;
+        const manager = new CaptureManager();
+        manager.setGrid({ ...normalizeGrid(null), windowProcess: "test.exe" });
+        try {
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => reject(new Error("Initial frame was not shown")), 1200);
+                manager.subscribe("button", {
+                    position: "1-1",
+                    live: false,
+                    update: async (image) => {
+                        if (image.startsWith("data:image/png")) {
+                            clearTimeout(timeout);
+                            resolve();
+                        }
+                    }
+                });
+            });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            expect(captureTrace.crops).toHaveLength(1);
+
+            const refreshed = new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => reject(new Error("Refreshed frame was not shown")), 1200);
+                const updates = captureTrace.crops.length;
+                const check = setInterval(() => {
+                    if (captureTrace.crops.length > updates) {
+                        clearInterval(check);
+                        clearTimeout(timeout);
+                        resolve();
+                    }
+                }, 10);
+            });
+            manager.refresh("button");
+            await refreshed;
+            expect(captureTrace.crops).toHaveLength(2);
         }
         finally {
             await manager.shutdown();

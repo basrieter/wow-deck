@@ -18,6 +18,7 @@ import {
 
 type Subscriber = {
     position: string;
+    live: boolean;
     update: (image: string, status: string) => Promise<void>;
 };
 const pause = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -34,6 +35,7 @@ export class CaptureManager {
     private latest: { frame: RawFrame; client: ClientRect } | null = null;
     private latestImages = new Map<string, string>();
     private wakeInterval: (() => void) | null = null;
+    private pendingSnapshots = new Set<string>();
     get window() {
         return this.selected;
     }
@@ -72,10 +74,11 @@ export class CaptureManager {
 
     subscribe(id: string, subscriber: Subscriber) {
         this.subscribers.set(id, subscriber);
+        this.pendingSnapshots.add(id);
         void (async () => {
             try {
                 await subscriber.update(fallbackSvg(this.status), this.status);
-                if (this.subscribers.get(id) !== subscriber || !this.latest) {
+                if (this.subscribers.get(id) !== subscriber || !subscriber.live || !this.latest) {
                     return;
                 }
                 const { frame, client } = this.latest;
@@ -100,8 +103,22 @@ export class CaptureManager {
         this.ensureRunning();
     }
 
+    refresh(id: string) {
+        const subscriber = this.subscribers.get(id);
+        if (!subscriber || subscriber.live) {
+            return;
+        }
+        this.pendingSnapshots.add(id);
+        // Restart so a static window is captured immediately when pressed.
+        this.generation++;
+        void this.session?.stop().catch(() => {});
+        this.session = null;
+        this.ensureRunning();
+    }
+
     unsubscribe(id: string) {
         this.subscribers.delete(id);
+        this.pendingSnapshots.delete(id);
         if (!this.subscribers.size) {
             this.generation++;
             this.wakeInterval?.();
@@ -118,6 +135,14 @@ export class CaptureManager {
             this.running = true;
             void this.loop();
         }
+    }
+
+    private hasLiveSubscribers() {
+        return [...this.subscribers.values()].some(subscriber => subscriber.live);
+    }
+
+    private shouldCapture() {
+        return this.hasLiveSubscribers() || this.pendingSnapshots.size > 0;
     }
 
     private warn(message: string) {
@@ -153,7 +178,7 @@ export class CaptureManager {
     }
 
     private async loop() {
-        while (this.subscribers.size) {
+        while (this.shouldCapture()) {
             const token = this.generation;
             let capture: ScreenCapture | null = null;
             try {
@@ -197,10 +222,10 @@ export class CaptureManager {
                 await capture.start();
                 let unavailableFrames = 0;
                 const previous = new Map<string, { hash: string; image: string }>();
-                while (this.subscribers.size && token === this.generation) {
+                while (this.shouldCapture() && token === this.generation) {
                     const frame = await capture.nextFrame();
                     const processedAt = performance.now();
-                    if (!frame || token !== this.generation || !this.subscribers.size) {
+                    if (!frame || token !== this.generation || !this.shouldCapture()) {
                         break;
                     }
                     const current = resolveWindow(this.grid);
@@ -225,7 +250,10 @@ export class CaptureManager {
                     this.latest = { frame, client };
                     const cache = new Map<string, { image: string; status: string }>();
                     const valid = new Map<string, PixelRegion>();
-                    for (const sub of this.subscribers.values()) {
+                    const targets = [...this.subscribers.entries()].filter(
+                        ([id, sub]) => sub.live || this.pendingSnapshots.has(id)
+                    );
+                    for (const [, sub] of targets) {
                         const pos = sub.position;
                         if (cache.has(pos) || valid.has(pos)) {
                             continue;
@@ -262,7 +290,7 @@ export class CaptureManager {
                         cache.set(pos, { image, status: "Mirroring" });
                     }
                     const results = await Promise.allSettled(
-                        [...this.subscribers.values()].map((sub) => {
+                        targets.map(([, sub]) => {
                             const data = cache.get(sub.position);
                             return data ? sub.update(data.image, data.status) : Promise.resolve();
                         })
@@ -271,6 +299,14 @@ export class CaptureManager {
                         if (result.status === "rejected") {
                             this.warn(`Button update failed: ${String(result.reason)}`);
                         }
+                    }
+                    for (const [id, sub] of targets) {
+                        if (!sub.live) {
+                            this.pendingSnapshots.delete(id);
+                        }
+                    }
+                    if (!this.hasLiveSubscribers()) {
+                        break;
                     }
                     await this.waitForInterval(processedAt, token);
                 }
@@ -297,7 +333,7 @@ export class CaptureManager {
                     this.session = null;
                 }
             }
-            if (this.subscribers.size && token === this.generation) {
+            if (this.shouldCapture() && token === this.generation) {
                 await pause(1500);
             }
         }

@@ -81,6 +81,7 @@ export class WowAction extends SingletonAction<ActionSettings> {
         }
         capture.subscribe(key.id, {
             position: settings.position,
+            live: settings.live,
             update: async (image, status) => {
                 if (this.lastImage.get(key.id) !== image) {
                     await key.setImage(image);
@@ -123,6 +124,9 @@ export class WowAction extends SingletonAction<ActionSettings> {
 
     override onKeyDown(ev: KeyDownEvent<ActionSettings>) {
         const settings = this.settings.get(ev.action.id) ?? normalizeAction(ev.payload.settings);
+        if (!settings.live) {
+            capture.refresh(ev.action.id);
+        }
         if (!parseShortcut(settings.shortcut)) {
             return;
         }

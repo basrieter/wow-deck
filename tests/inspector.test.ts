@@ -98,6 +98,7 @@ describe("Property Inspector protocol", () => {
         const actionSave = socket.messages.find(m => m.event === "setSettings");
         expect(actionSave?.context).toBe("pi-uuid");
         expect(actionSave?.payload).toMatchObject({ position: "2-3" });
+        expect(actionSave?.payload).toMatchObject({ live: true });
         expect(actionSave?.payload).not.toHaveProperty("mirror");
         expect(get("status").textContent).toBe("Saving button settings…");
         socket.onmessage?.({
@@ -107,6 +108,9 @@ describe("Property Inspector protocol", () => {
             })
         });
         expect(get("status").textContent).toBe("Button settings saved");
+        get("live").checked = false;
+        get("live").onchange?.();
+        expect(socket.messages.at(-1)?.payload).toMatchObject({ live: false });
         socket.onmessage?.({
             data: JSON.stringify({
                 event: "didReceiveGlobalSettings",

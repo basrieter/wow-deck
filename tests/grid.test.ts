@@ -38,11 +38,15 @@ describe("shared grid", () => {
     });
 });
 describe("button settings", () => {
-    it("ignores a saved mirror switch from older versions", () => {
+    it("defaults live updates on while ignoring the retired mirror switch", () => {
         expect(normalizeAction({ position: "2-3", shortcut: "F1", mirror: false })).toEqual({
             position: "2-3",
-            shortcut: "F1"
+            shortcut: "F1",
+            live: true
         });
+    });
+    it("preserves a saved live-update preference", () => {
+        expect(normalizeAction({ live: false }).live).toBe(false);
     });
 });
 describe("shortcuts", () => {
