@@ -10,7 +10,7 @@ export interface GridSettings {
     columnCount: number;
     horizontalGap: number;
     verticalGap: number;
-    captureInterval: 250 | 500 | 1000 | 2000;
+    captureInterval: 100 | 150 | 200 | 250 | 500 | 1000 | 2000;
 }
 
 export const DEFAULT_GRID: GridSettings = {
@@ -33,7 +33,7 @@ const bounded = (v: unknown, min: number, max: number, fallback: number) =>
 
 export function normalizeGrid(value: unknown): GridSettings {
     const v = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-    const interval = [250, 500, 1000, 2000].includes(Number(v.captureInterval)) ? Number(v.captureInterval) : 1000;
+    const interval = [100, 150, 200, 250, 500, 1000, 2000].includes(Number(v.captureInterval)) ? Number(v.captureInterval) : 1000;
     return {
         windowProcess: typeof v.windowProcess === "string" ? v.windowProcess.slice(0, 260) : "",
         windowTitle: typeof v.windowTitle === "string" ? v.windowTitle.slice(0, 260) : "",

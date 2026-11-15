@@ -36,6 +36,12 @@ describe("shared grid", () => {
         expect(normalizeGrid({ rowCount: -1, cellWidth: 0, captureInterval: 123 }).captureInterval).toBe(1000);
         expect(normalizeGrid({ hashChangeDetection: false })).not.toHaveProperty("hashChangeDetection");
     });
+    it("accepts the shorter capture intervals", () => {
+        for (const interval of [100, 150, 200]) {
+            expect(normalizeGrid({ captureInterval: interval }).captureInterval).toBe(interval);
+            expect(normalizeGrid({ captureInterval: String(interval) }).captureInterval).toBe(interval);
+        }
+    });
 });
 describe("button settings", () => {
     it("defaults live updates on while ignoring the retired mirror switch", () => {
